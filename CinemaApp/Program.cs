@@ -1,12 +1,23 @@
+using CinemaApp.Data;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using NLog.Web;
+
 namespace CinemaApp;
 
 public class Program {
     public static void Main(string[] args) {
         var builder = WebApplication.CreateBuilder(args);
-
+        
+        builder.Logging.ClearProviders();
+        builder.Logging.SetMinimumLevel(LogLevel.Trace);
+        builder.Host.UseNLog();
+        
         // Add services to the container.
         builder.Services.AddControllersWithViews();
-
+        builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("default_db")));
+        builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
+        
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -18,7 +29,8 @@ public class Program {
 
         app.UseHttpsRedirection();
         app.UseRouting();
-
+        
+        app.UseAuthentication();
         app.UseAuthorization();
 
         app.MapStaticAssets();
